@@ -8,7 +8,7 @@ az_function_private_dns_zone_group="/subscriptions/38df8db5-1d29-4087-9e88-16d38
 
 # SignalR Settings
 signalr_name = "signalr-test-example"
-allowed_origins = ["http://localhost:4200", "https://example-az-func.azurewebsites.net"]
+allowed_origins = ["https://example-az-func.azurewebsites.net"]
 public_network_access_enabled = false
 
 network_interface_signalr = "nic-signalr-test-example"

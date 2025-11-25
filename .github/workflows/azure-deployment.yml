@@ -1,0 +1,77 @@
+name: Deploy Azure SignalR Private Endpoint
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'DevOps/**'
+      - '.github/workflows/azure-deployment.yml'
+  workflow_dispatch:
+
+env:
+  TERRAFORM_FILENAME: 'infrastructure.tfstate'
+  TERRAFORM_WORKING_DIRECTORY: './DevOps/Terraform/Infrastructures'
+  TERRAFORM_STORAGE_ACCOUNT: 'tfstateexampleazfunc'
+  TERRAFORM_CONTAINER_NAME: 'tfstatecontainer'
+  TERRAFORM_RESOURCE_GROUP_NAME: 'rg-signal-example'
+
+  AZURE_FUNCTIONAPP_NAME: 'example-az-func'
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '${{ github.workspace }}\build-packages'
+  PROJECT_TARGET_PATH: './AzFunctionWithSignalR/AzFunctionWithSignalR.csproj'
+  BUILD_NAME: 'AzFunctionWithSignalR'
+
+jobs:
+
+  setup-infrastructure-on-test:
+    runs-on: windows-latest
+    environment: test
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - uses: nhatthaiquang-agilityio/Terraform-CI-CD/.github/actions/terraform@main
+        id: run-terraform
+        with:
+          working-directory: ${{ env.TERRAFORM_WORKING_DIRECTORY }}
+          environment: 'test'
+          arm-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          arm-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          arm-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          arm-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          terraform-resource-group-name: ${{ env.TERRAFORM_RESOURCE_GROUP_NAME }}
+          terraform-storage-account: ${{ env.TERRAFORM_STORAGE_ACCOUNT }}
+          terraform-container-name: ${{ env.TERRAFORM_CONTAINER_NAME }}
+          terraform-filename: 'test.${{ env.TERRAFORM_FILENAME }}'
+
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - uses: nhatthaiquang-agilityio/Terraform-CI-CD/.github/actions/build-package-dotnet@main
+        id: build-package
+        with:
+          solution-path: ${{ env.SOLUTION_PATH }}
+          build-target-path: ${{ env.PROJECT_TARGET_PATH }}
+          build-name: ${{ env.BUILD_NAME }}
+
+  deploy:
+    runs-on: windows-latest
+    environment: test
+    needs: [build]
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 'drop'
+          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: azure-functions
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          slot-name: 'Production'
+          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          publish-profile: '${{ secrets.AZURE_PUBLISH_PROFILE }}'
