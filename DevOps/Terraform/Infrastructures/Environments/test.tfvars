@@ -5,8 +5,8 @@ azurerm_windows_function_app_name="example-az-func"
 
 # SignalR Settings
 signalr_name = "signalr-test-example"
-allowed_origins = ["https://example-az-func.azurewebsites.net"]
-public_network_access_enabled = false
+allowed_origins = ["http://localhost:7098","https://example-az-func.azurewebsites.net"]
+public_network_access_enabled = true
 
 network_interface_signalr = "nic-signalr-test-example"
 pv_svc_connection_signalr="pe-signalr-test-example"

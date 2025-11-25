@@ -22,7 +22,7 @@ resource "azurerm_signalr_service" "signalr_example" {
   connectivity_logs_enabled = true
   messaging_logs_enabled    = true
   http_request_logs_enabled = true
-  service_mode              = "Default"
+  service_mode              = "Serverless"
 }
 
 
