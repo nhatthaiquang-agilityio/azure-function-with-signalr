@@ -52,7 +52,7 @@ resource "azurerm_subnet" "az_func_subnet_int" {
   name                 = "subnet-int-az-func"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.az_signalr_network.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = ["10.0.3.0/24"]
 
   delegation {
     name = "example-delegation"
