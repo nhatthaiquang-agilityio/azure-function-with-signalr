@@ -1,78 +1,35 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.SignalRService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Text.Json.Serialization;
+using System.Security.Claims;
 
-namespace FunctionApp;
-
-public class Functions
+namespace FunctionApp
 {
-    private readonly ILogger<Functions> _logger;
-    private static readonly HttpClient HttpClient = new();
-    private static string Etag = string.Empty;
-    private static int StarCount = 0;
-
-    public Functions(ILogger<Functions> logger)
+    public class SimpleChat : ServerlessHub
     {
-        _logger = logger;
-    }
 
-    [Function("Function1")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
-    {
-        _logger.LogInformation("C# HTTP trigger function processed a request.");
-        return new OkObjectResult("Welcome to Azure Functions!");
-    }
+        [Function("index")]
+        public IActionResult GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req, Microsoft.Azure.WebJobs.ExecutionContext context)
+        {
+            var path = Path.Combine(context.FunctionAppDirectory, "content", "index.html");
+            Console.WriteLine(path);
+            return new ContentResult
+            {
+                Content = File.ReadAllText(path),
+                ContentType = "text/html",
+            };
+        }
 
+        [Function("negotiate")]
+        public SignalRConnectionInfo Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req)
+        {
+            var claims = GetClaims(req.Headers["Authorization"]);
+            return Negotiate(
+                claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
+                claims
+            );
+        }
 
-    [Function("index")]
-    public static HttpResponseData GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req, ExecutionContext context)
-    {
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        response.WriteString(File.ReadAllText("content/index.html"));
-        response.Headers.Add("Content-Type", "text/html");
-        return response;
-    }
-
-    [Function("negotiate")]
-    public static HttpResponseData Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req,
-        [SignalRConnectionInfoInput(HubName = "serverless")] string connectionInfo)
-    {
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "application/json");
-        response.WriteString(connectionInfo);
-        return response;
-    }
-
-    // [Function("broadcast")]
-    // [SignalROutput(HubName = "serverless")]
-    // public static async Task<SignalRMessageAction> Broadcast([TimerTrigger("*/5 * * * * *")] TimerInfo timerInfo)
-    // {
-    //     var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/azure/azure-signalr");
-    //     request.Headers.UserAgent.ParseAdd("Serverless");
-    //     request.Headers.Add("If-None-Match", Etag);
-    //     var response = await HttpClient.SendAsync(request);
-    //     if (response.Headers.Contains("Etag"))
-    //     {
-    //         Etag = response.Headers.GetValues("Etag").First();
-    //     }
-    //     if (response.StatusCode == HttpStatusCode.OK)
-    //     {
-    //         var result = await response.Content.ReadFromJsonAsync<GitResult>();
-    //         if (result != null)
-    //         {
-    //             StarCount = result.StarCount;
-    //         }
-    //     }
-    //     return new SignalRMessageAction("newMessage", new object[] { $"Current star count of https://github.com/Azure/azure-signalr is: {StarCount}" });
-    // }
-
-    private class GitResult
-    {
-        [JsonPropertyName("stargazers_count")]
-        public int StarCount { get; set; }
     }
 }

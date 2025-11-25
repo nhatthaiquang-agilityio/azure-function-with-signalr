@@ -37,5 +37,14 @@ resource "azurerm_windows_function_app" "example_az_func" {
   }
 
   site_config {
+    use_32_bit_worker = false
+    always_on = true
+    application_stack {
+      dotnet_version = "v8.0"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [ app_settings ]
   }
 }
