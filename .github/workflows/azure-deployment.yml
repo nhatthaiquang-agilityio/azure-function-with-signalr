@@ -1,4 +1,4 @@
-name: Deploy Azure SignalR Private Endpoint
+name: Deploy Azure Function and Azure SignalR
 on:
   push:
     branches:
@@ -59,7 +59,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     environment: test
-    needs: [build]
+    needs: [build, setup-infrastructure-on-test]
     steps:
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
