@@ -4,6 +4,7 @@ on:
     branches:
       - main
     paths:
+      - 'AzFunctionWithSignalR/**'
       - 'DevOps/**'
       - '.github/workflows/azure-deployment.yml'
   workflow_dispatch:
