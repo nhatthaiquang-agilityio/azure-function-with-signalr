@@ -7,13 +7,6 @@ resource "azurerm_storage_account" "example" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_application_insights" "application_insights" {
-  name                = "application-insights"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  application_type    = "web"
-}
-
 # Azure Service Plan
 resource "azurerm_service_plan" "example" {
   name                = "rk-app-service-plan01"
@@ -41,7 +34,6 @@ resource "azurerm_windows_function_app" "example_az_func" {
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE" = 1
     "FUNCTIONS_WORKER_RUNTIME" = "dotnet-isolated",
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.application_insights.instrumentation_key,
   }
 
   site_config {
