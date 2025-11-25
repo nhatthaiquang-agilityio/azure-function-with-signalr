@@ -1,35 +1,59 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Extensions.SignalRService;
-using Microsoft.AspNetCore.Mvc;
+using Azure;
 using Microsoft.Azure.Functions.Worker;
-using System.Security.Claims;
+using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
+
 
 namespace FunctionApp
 {
-    public class SimpleChat : ServerlessHub
+    public class Functions
     {
 
         [Function("index")]
-        public IActionResult GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req, Microsoft.Azure.WebJobs.ExecutionContext context)
+        public static HttpResponseData GetHomePage([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req)
         {
-            var path = Path.Combine(context.FunctionAppDirectory, "content", "index.html");
-            Console.WriteLine(path);
-            return new ContentResult
-            {
-                Content = File.ReadAllText(path),
-                ContentType = "text/html",
-            };
+            Console.WriteLine("Get HomePage");
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteString(File.ReadAllText("content/index.html"));
+            response.Headers.Add("Content-Type", "text/html");
+            Console.WriteLine("Get HomePage response");
+            return response;
         }
 
         [Function("negotiate")]
-        public SignalRConnectionInfo Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)]HttpRequest req)
+        public static HttpResponseData Negotiate([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequestData req,
+            [SignalRConnectionInfoInput(HubName = "serverless")] string connectionInfo)
         {
-            var claims = GetClaims(req.Headers["Authorization"]);
-            return Negotiate(
-                claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value,
-                claims
-            );
+            Console.WriteLine("Negotiate");
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json");
+            response.WriteString(connectionInfo);
+            Console.WriteLine("Negotiate response");
+            return response;
         }
+
+        //[Function("broadcast")]
+        //[SignalROutput(HubName = "serverless")]
+        //public static async Task<SignalRMessageAction> Broadcast([TimerTrigger("*/5 * * * * *")] TimerInfo timerInfo)
+        //{
+        //    var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/azure/azure-signalr");
+        //    request.Headers.UserAgent.ParseAdd("Serverless");
+        //    request.Headers.Add("If-None-Match", Etag);
+        //    var response = await HttpClient.SendAsync(request);
+        //    if (response.Headers.Contains("Etag"))
+        //    {
+        //        Etag = response.Headers.GetValues("Etag").First();
+        //    }
+        //    if (response.StatusCode == HttpStatusCode.OK)
+        //    {
+        //        var result = await response.Content.ReadFromJsonAsync<GitResult>();
+        //        if (result != null)
+        //        {
+        //            StarCount = result.StarCount;
+        //        }
+        //    }
+        //    return new SignalRMessageAction("newMessage", new object[] { $"Current star count of https://github.com/Azure/azure-signalr is: {StarCount}" });
+        //}
 
     }
 }
