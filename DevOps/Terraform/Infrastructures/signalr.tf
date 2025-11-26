@@ -21,7 +21,7 @@ resource "azurerm_signalr_service" "signalr_example" {
     category_pattern = [ "*"]
     event_pattern = ["*"]
     hub_pattern = [ "*"]
-    url_template  = "https://${var.azurerm_windows_function_app_name}.azurewebsites.net/runtime/webhooks/signalr?code=${azurerm_windows_function_app.example_az_func.signalr_extension_key}"
+    url_template  = "https://${var.azurerm_windows_function_app_name}.azurewebsites.net/runtime/webhooks/signalr?code="
   }
 
   public_network_access_enabled = var.public_network_access_enabled
