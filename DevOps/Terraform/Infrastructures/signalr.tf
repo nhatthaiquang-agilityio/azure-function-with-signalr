@@ -67,6 +67,20 @@ resource "azurerm_private_endpoint" "pv_endpoint_signalr" {
   }
 }
 
+resource "azurerm_signalr_service_network_acl" "example" {
+  signalr_service_id = azurerm_signalr_service.signalr_example.id
+  default_action     = "Deny"
+
+  public_network {
+    allowed_request_types = ["ClientConnection"]
+  }
+
+  private_endpoint {
+    id                    = azurerm_private_endpoint.pv_endpoint_signalr.id
+    allowed_request_types = ["ServerConnection"]
+  }
+}
+
 # Private DNS Zone for SignalR
 resource "azurerm_private_dns_zone" "signalr_dns" {
   name                = "privatelink.service.signalr.net"
